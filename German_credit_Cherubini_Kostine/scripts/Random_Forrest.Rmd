@@ -1,0 +1,72 @@
+```{r}
+library(caret)
+library(nnet)
+library(gmodels)
+library(randomForest)
+library(funModeling)
+
+rf_set = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
+
+
+rf_set["RESPONSE"][rf_set["RESPONSE"] == 0] = "Bad Rating"
+rf_set["RESPONSE"][rf_set["RESPONSE"] == 1] = "Good Rating"
+
+#convert all concerned variables to factors
+cols = c(2,4:10,12:22,24:32)
+rf_set[,cols]= lapply(rf_set[,cols], as.factor)
+
+#Remove col"OBS."
+rf_set = rf_set[,-1]
+
+summary(rf_set)
+
+#With the help of the summary function we are able to identify some incorrect values such as edutcation = -1, age = 125 and guarantor = 2 (only one occurrence of 2, might be a typo) 
+
+#Change the incorrect values, to be noted in the final report !!!
+
+rf_set[37,8]=1
+rf_set[234,18]=1
+rf_set[537,22]=75
+
+```
+
+```{r}
+set.seed(3456)
+trainIndex_rf <- createDataPartition(rf_set$RESPONSE, p = .7,
+                                  list = FALSE)
+
+train_rf <- rf_set[trainIndex_rf,]
+
+test_rf <- rf_set[-trainIndex_rf,]
+```
+
+
+```{r}
+
+system.time(
+  german_rf <- caret::train(RESPONSE ~ .,
+                         data=train_rf,
+                         method="rf",
+                         preProcess=NULL,
+                         trControl=trainControl(method="cv", sampling="down")
+                         )
+)
+
+```
+
+```{r}
+#Cross-validation
+german_rf_pred <- predict(german_rf, test_rf)
+confusionMatrix(german_rf_pred, test_rf$RESPONSE, positive = "Good Rating")
+
+```
+
+```{r}
+#head(round(importance(german_rf), 2))
+#varImpPlot(german_rf)
+
+varImp(german_rf, scale = TRUE)
+
+
+
+```

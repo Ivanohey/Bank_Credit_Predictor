@@ -1,0 +1,68 @@
+```{r}
+library(MASS)
+library(caret)
+library(ROCR)
+library(tibble)
+library(kableExtra)
+################################################################################
+#Logistic Regression
+################################################################################
+
+#We do some basic wrangling
+data_log = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
+data_log <- data.frame(data_log)
+#data_log["RESPONSE"][data_log["RESPONSE"] == 0] = "Bad Rating"
+#data_log["RESPONSE"][data_log["RESPONSE"] == 1] = "Good Rating"
+
+#convert all concerned variables to factors
+#cols = c(2,4:10,12:22,24:32)
+#data_log[,cols]= lapply(data_log[,cols], as.factor)
+
+#Remove col"OBS."
+data_log = data_log[,-1]
+
+data_log[37,8]=1
+data_log[234,18]=1
+data_log[537,22]=75
+
+str(data_log)
+
+
+
+```
+
+
+```{r}
+
+library(lmtest)
+library(rcompanion)
+
+
+#We split the data into train (80%) and test (20%)
+set.seed(3456)
+trainIndex_glm <- createDataPartition(data_log$RESPONSE, p = .8,
+                                  list = FALSE)
+
+train.df <- data_log[ trainIndex_glm,]
+test.df <- data_log[-trainIndex_glm,]
+
+#We fit the logistic model with the training set
+glm.fit <- glm(RESPONSE ~ ., data = train.df,
+               family=binomial())
+summary(glm.fit)
+
+#We do an AIC backward selection
+
+glm.fit.selection <- step(glm.fit)
+
+#Model predict
+
+glm.predict <- predict(glm.fit.selection, test.df, type="response")
+
+#Confusion Matrix
+
+log_matrix = confusionMatrix(data = as.factor(glm.predict>0.5), reference = as.factor(test.df$RESPONSE>0.5), positive = "TRUE")
+log_matrix
+
+```
+

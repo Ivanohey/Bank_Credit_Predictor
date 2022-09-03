@@ -1,0 +1,120 @@
+```{r}
+library(ggplot2)
+library(DT)
+library(igraph)
+library(Hmisc)  
+library(tidyverse)
+library(tidyquant)
+library(ggthemes)
+library(RColorBrewer)
+library(corrplot)
+library(psych)
+library(GGally)
+library(corrr)
+library(corrplot)
+library(ggcorrplot)
+library(kableExtra)
+library(DataExplorer)
+library(inspectdf)
+library(dplyr)
+library(explore)
+library(caret)
+library(rpart)
+
+tree_set = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
+
+tree_set["RESPONSE"][tree_set["RESPONSE"] == 0] = "Bad Rating"
+tree_set["RESPONSE"][tree_set["RESPONSE"] == 1] = "Good Rating"
+
+#convert all concerned variables to factors
+cols = c(2,4:10,12:22,24:32)
+tree_set[,cols]= lapply(tree_set[,cols], as.factor)
+
+#Remove col"OBS."
+tree_set = tree_set[,-1]
+
+tree_set[37,8]=1
+tree_set[234,18]=1
+tree_set[537,22]=75
+
+str(tree_set)
+
+```
+
+```{r}
+set.seed(3456)
+
+trainIndex_trees <- createDataPartition(tree_set$RESPONSE, p = .7,
+                                  list = FALSE)
+
+train_tr <- tree_set[trainIndex_trees,]
+
+test_tr <- tree_set[-trainIndex_trees,]
+
+
+```
+
+
+# Decision Tree
+
+```{r}
+
+set.seed(10777)
+#
+credit_ct <- train_tr %>%
+    rpart(formula = RESPONSE ~ ., method = "class", cp = 0.001, model = T) %>%
+    summary()
+
+```
+
+```{r}
+
+par(mar = c(0.5, 1, 0.5, 1))
+plot(credit_ct, uniform = TRUE)
+text(credit_ct, use.n = TRUE, all = TRUE, cex = 0.6)
+
+
+```
+
+
+```{r}
+par(mar = c(2, 1, 2, 1))
+options(digits = 6)
+printcp(credit_ct)
+plotcp(credit_ct)
+
+```
+
+```{r}
+cp <- credit_ct$cptable
+opt <- which.min(credit_ct$cptable[,"xerror"])
+r <- cp[, 4][opt] + cp[, 5][opt]
+rmin <- min(seq(1:dim(cp)[1])[cp[, 4] < r])
+cp0 <- cp[rmin, 1]
+cat("size chosen was", cp[rmin, 2] + 1, "\n")
+
+
+
+```
+
+```{r}
+
+credit_ct1 <- prune(credit_ct, cp = 1.01*cp0)
+summary(credit_ct1)
+
+```
+
+```{r}
+
+library(rpart.plot)
+rpart.plot(credit_ct1, main = "German Credit Classification Tree")
+```
+
+
+```{r}
+german_tr_pred = predict(credit_ct1, test_tr, type = "class")
+
+confusionMatrix(german_tr_pred, test_tr$RESPONSE, positive = "Good Rating")
+
+```
+

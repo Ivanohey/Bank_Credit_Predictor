@@ -1,0 +1,202 @@
+---
+title: "Projects_in_DA_EDA"
+author: "Niccolò Cherubini & Ivan Kostine"
+date: "4/26/2022"
+output:
+  html_document:
+    code_folding: hide
+          
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Useful packages
+```{r echo=TRUE, warning=FALSE,message=FALSE}
+library(ggplot2)
+library(DT)
+library(igraph)
+library(Hmisc)  
+library(tidyverse)
+library(tidyquant)
+library(ggthemes)
+library(RColorBrewer)
+library(corrplot)
+library(psych)
+library(GGally)
+library(corrr)
+library(corrplot)
+library(ggcorrplot)
+library(kableExtra)
+library(DataExplorer)
+library(inspectdf)
+library(dplyr)
+library(explore)
+library(rpart)
+library(PerformanceAnalytics)
+library(caret)
+```
+
+# EDA
+
+## Data Wrangling
+```{r, include=TRUE}
+germancredit = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
+
+str(germancredit)
+
+#Thanks to str we can have an overview of variables types and specs: all features are integers but from what we have been said some of them are categorical, we can convert them to factors/categorical variables. Let first convert the response variable from numeric to string (More clear):
+
+germancredit["RESPONSE"][germancredit["RESPONSE"] == 0] = "Bad Rating"
+germancredit["RESPONSE"][germancredit["RESPONSE"] == 1] = "Good Rating"
+
+#convert all concerned variables to factors
+cols = c(2,4:10,12:22,24:32)
+germancredit[,cols]= lapply(germancredit[,cols], as.factor)
+cols_num = c(3,11,23)
+germancredit[,cols_num]= lapply(germancredit[,cols_num], as.numeric)
+
+
+#Remove col"OBS."
+germancredit = germancredit[,-1]
+
+summary(germancredit)
+
+#With the help of the summary function we are able to identify some incorrect values such as education = -1, age = 125 and guarantor = 2 (only one occurrence of 2, might be a typo) 
+
+#Change the incorrect values, to be noted in the final report !!!
+
+germancredit[37,8]=1
+germancredit[234,18]=1
+germancredit[537,22]=75
+
+
+
+
+str(germancredit)
+
+datatable(germancredit)
+
+```
+
+
+```{r include=FALSE}
+n = dim(germancredit)[1]
+p = dim(germancredit)[2]
+quant = 31
+```
+
+
+## Data Explorer
+
+```{r}
+
+#we check for missing values and final data type distribution
+introduce(germancredit)
+paste("This data set contains",sum(rowSums(is.na(germancredit)))/nrow(germancredit),"missing values")
+
+paste("Data Set is",(sum(complete.cases(germancredit))/nrow(germancredit))*100,"% complete")
+
+plot_missing(germancredit)
+
+
+#data type distribution
+plot_intro(germancredit)
+```
+
+## Categorical variables analysis:
+
+```{r}
+
+#Categorical variables analysis:
+
+
+
+germancredit %>% group_by(RESPONSE) %>% summarise(freq = n())
+
+ggplot(germancredit, aes(x = RESPONSE)) + geom_bar(aes(fill = factor(RESPONSE))) + labs(color = "",
+    fill = "", x = "response", y = "count", title = "Rating distribution", subtitle = "0: Bad Rating - 1: Good Rating",
+    caption = "Rating distribution") + theme_bw()
+
+#
+#
+#Correlation matrix for categorical variables.
+
+unused_cols = c(2,10,22,31)
+model.matrix(~0+., data=germancredit[,-unused_cols]) %>% 
+  cor(use="pairwise.complete.obs") %>% 
+  ggcorrplot(show.diag = FALSE, type="upper", lab = FALSE, lab_size=2, ggtheme = ggplot2::theme_gray, colors = c("#C41E3A", "white", "#228B22" ), tl.cex = 6, insig = "blank", method = "square")
+```
+
+
+# Numerical variables analysis:
+
+```{r}
+
+#Numerical / continuous variables analysis:
+
+plot_histogram(germancredit, title = "Histograms of GermanCredit variables", ggtheme = theme_bw())
+
+plot_density(germancredit, title ="Density plots of GermanCredit variables", ggtheme = theme_bw())
+
+plot_boxplot(germancredit, title = "Credit Rating within numerical variables", by = 'RESPONSE', ncol = 2)
+
+
+mydata <- germancredit[, c(2,10,22)]
+chart.Correlation(mydata, histogram=TRUE, pch=19)
+
+
+```
+
+
+```{r}
+
+#some plots to visually see how variables interact together:
+
+#explore(germancredit)
+germancredit %>% explore(AGE, target = RESPONSE) #Before the age of env.32, most of client have a bad credit rating but after 32, people start to be "good".
+
+germancredit %>% explore(AGE, target = AMOUNT) #No big difference in amount credits boxplot
+
+germancredit %>% explore(RESPONSE, target = AGE) #No large difference in median age between good and bad credit rating
+
+#What explains the switch of trend after 32 years old ?
+
+germancredit %>% explore(JOB, target = AGE) #No large difference in median age between good and bad credit rating
+
+germancredit %>% explore(AGE, target = EDUCATION) #No large difference in median age between good and bad credit rating
+
+#
+germancredit %>% explore(AMOUNT, target = RESPONSE)
+
+germancredit %>% explore(RESPONSE, target = JOB)
+
+
+germancredit %>% explore(AGE, AMOUNT, target = RESPONSE)
+
+germancredit %>% explore(CHK_ACCT, target = RESPONSE)
+
+germancredit %>% explore(RESPONSE, target = HISTORY)
+
+germancredit %>% explore(RESPONSE, target = CHK_ACCT)
+```
+```{r Good rated client}
+
+ggplot(data=germancredit, aes(x=AGE, group=JOB, fill=JOB)) + 
+  geom_density(adjust=1.5, alpha=.4)
+
+```
+
+```{r Bad rated client}
+
+
+
+```
+
+
+
+
+
+
+

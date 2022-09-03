@@ -1,0 +1,87 @@
+```{r load_packages}
+library(MASS)
+library(caret)
+library(ROCR)
+library(tibble)
+```
+
+```{r load_data}
+data <- read.csv2("../data/germancredit_final.csv")
+head(data)
+
+```
+
+
+```{r train_test_dataset}
+#We split the data into train (80%) and test (20%)
+set.seed(3456)
+trainIndex <- createDataPartition(data$RESPONSE, p = .8,
+                                  list = FALSE)
+train.df <- as.data.frame(data[ trainIndex,])
+test.df <- as.data.frame(data[-trainIndex,])
+
+```
+
+```{r balancing_data}
+
+
+#We perform a sub-sampling of the training set in order to equalize the amount of good ratings and bad ratings in the RESPONSE feature. We reduce the amount of "Good rating"
+
+
+
+
+
+```
+
+```{r lda_prediction_caret}
+
+lda_fit_caret <- train(RESPONSE ~ ., data = train.df, method="lda", trControl = trainControl(method = "cv", sampling = "down"))
+lda_predict_caret <- predict(lda_fit_caret, newdata = test.df)
+
+confusion_matrix_lda <- confusionMatrix(lda_predict_caret, as.factor(test.df$RESPONSE), positive= "Good Rating")
+confusion_matrix_lda
+
+```
+
+
+```{r lda_predictions_MASS}
+#We create the formula for the LDA model
+lda_formula <- paste(names(train.df)[32], "~", paste(names(train.df)[-32], collapse=" + "))
+
+#Linear Discriminant Analysis (LDA)
+lda.fit<-lda(as.formula(paste(lda_formula)), data = train.df)
+lda.fit
+
+#We do some predictions on our test data
+lda.predict <- predict(lda.fit, newdata = test.df)
+```
+
+```{r roc_curve}
+
+#We built ROC curve to show the ratio of true/false positives
+# Get the posteriors as a dataframe.
+lda.predict.posteriors <- as.data.frame(lda.predict$posterior)
+
+# Evaluate the model
+pred <- prediction(lda.predict.posteriors[,2], test.df$RESPONSE)
+roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
+auc.train <- performance(pred, measure = "auc")
+auc.train <- auc.train@y.values
+
+# Plot ROC curve
+plot(roc.perf)
+abline(a=0, b= 1)
+text(x = .25, y = .65 ,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+
+```
+
+```{r confusion_matrix}
+#We build a confusion matrix
+prev.class.lda <- tibble(actual = test.df$RESPONSE, class = lda.predict$class)
+head(prev.class.lda)
+
+#We print the confusion matrix
+confusion_matrix_lda <- confusionMatrix(as.factor(prev.class.lda$class), as.factor(prev.class.lda$actual), positive= "Good Rating")
+confusion_matrix_lda
+```
+

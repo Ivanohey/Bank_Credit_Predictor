@@ -1,0 +1,94 @@
+```{r}
+library(caret)
+library(nnet)
+library(gmodels)
+
+nn_set = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
+
+
+nn_set["RESPONSE"][nn_set["RESPONSE"] == 0] = "Bad Rating"
+nn_set["RESPONSE"][nn_set["RESPONSE"] == 1] = "Good Rating"
+
+#convert all concerned variables to factors
+cols = c(2,4:10,12:22,24:32)
+nn_set[,cols]= lapply(nn_set[,cols], as.factor)
+
+#Remove col"OBS."
+nn_set = nn_set[,-1]
+
+summary(nn_set)
+
+#With the help of the summary function we are able to identify some incorrect values such as edutcation = -1, age = 125 and guarantor = 2 (only one occurrence of 2, might be a typo) 
+
+#Change the incorrect values, to be noted in the final report !!!
+
+nn_set[37,8]=1
+nn_set[234,18]=1
+nn_set[537,22]=75
+
+```
+
+
+```{r}
+
+
+
+set.seed(3456)
+trainIndex <- createDataPartition(nn_set$RESPONSE, p = .7,
+                                  list = FALSE)
+
+train <- nn_set[trainIndex,]
+
+test <- nn_set[-trainIndex,]
+
+
+
+```
+
+
+
+```{r}
+german.net <- nnet(RESPONSE ~ AGE + DURATION + HISTORY + AMOUNT + EMPLOYMENT + CHK_ACCT + SAV_ACCT, data = train, size = 10, decay = 0.005,
+    Hess = T, maxit = 500)
+
+
+
+```
+
+```{r}
+eigen(german.net$Hess, T)$values
+
+importance <- varImp(german.net)
+print(importance)
+```
+
+
+
+```{r}
+library(NeuralNetTools)
+par(mar = numeric(4), family = "serif")
+plotnet(german.net, pos_col = "darkgreen", neg_col = "darkblue")
+```
+
+
+
+```{r}
+table(true = test$RESPONSE, predicted = predict(german.net, test, type = "class"))
+
+```
+
+```{r}
+
+
+german.pred <- predict(german.net, test, type = "class")
+CrossTable(x = test$RESPONSE, y = german.pred, prop.chisq = FALSE)
+
+
+```
+
+```{r}
+german.pred = as.factor(german.pred)
+
+confusionMatrix(german.pred, test$RESPONSE, positive = "Good Rating")
+```
+
