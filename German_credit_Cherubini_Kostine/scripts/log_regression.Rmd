@@ -72,10 +72,9 @@ confusion_matrix_glm
 
 ```{r roc_curve}
 #We create a ROC curve
-
 set.seed(1234)
-glm_predict_caret <- predict(glm_fit_caret, test.df, type="prob")
-roc_curve = roc(test.df$RESPONSE, glm_predict_caret[,2], plot = TRUE, print.auc = TRUE)
+glm_predict_caret_prob <- predict(glm_fit_caret, test.df, type="prob")
+roc_curve = roc(test.df$RESPONSE, glm_predict_caret_prob[,2], plot = TRUE, print.auc = TRUE)
 
 
 ```
