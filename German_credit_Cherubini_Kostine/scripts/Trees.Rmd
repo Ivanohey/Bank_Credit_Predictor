@@ -56,67 +56,6 @@ test_tr <- tree_set[-trainIndex_trees,]
 ```
 
 
-# Decision Tree
-
-```{r}
-
-set.seed(10777)
-#
-credit_ct <- train_tr %>%
-    rpart(formula = RESPONSE ~ ., method = "class", cp = 0.001, model = T) %>%
-    summary()
-
-```
-
-```{r}
-
-par(mar = c(0.5, 1, 0.5, 1))
-plot(credit_ct, uniform = TRUE)
-text(credit_ct, use.n = TRUE, all = TRUE, cex = 0.6)
-
-
-```
-
-
-```{r}
-par(mar = c(2, 1, 2, 1))
-options(digits = 6)
-printcp(credit_ct)
-plotcp(credit_ct)
-with(credit_ct, {
-    lines(cptable[, 2] + 1, cptable[, 3], type = "b", col = "red")
-    legend(2.7, 1, c("Resub. Error", "CV Error", "min(CV Error)+1SE"), lty = c(1,
-        1, 2), col = c("red", "black", "black"), bty = "n", cex = 0.8)
-})
-
-```
-
-```{r}
-cp <- credit_ct$cptable
-opt <- which.min(credit_ct$cptable[,"xerror"])
-r <- cp[, 4][opt] + cp[, 5][opt]
-rmin <- min(seq(1:dim(cp)[1])[cp[, 4] < r])
-cp0 <- cp[rmin, 1]
-cat("size chosen was", cp[rmin, 2] + 1, "\n")
-
-
-
-```
-
-```{r}
-
-credit_ct1 <- prune(credit_ct, cp = 1.01*cp0)
-summary(credit_ct1)
-
-```
-
-```{r}
-
-library(rpart.plot)
-rpart.plot(credit_ct1, main = "German Credit Classification Tree")
-```
-
-
 ```{r}
 german_tr_pred = predict(credit_ct1, test_tr, type = "class")
 
@@ -154,5 +93,15 @@ printcp(credit_caret$finalModel)
 german_caret_pred = predict(credit_caret, test_tr, type = "raw")
 
 confusionMatrix(german_caret_pred, test_tr$RESPONSE, positive = "Good Rating")
+
+```
+```{r}
+
+tr_roc <- predict(credit_caret, test_tr, type="prob")
+
+tr_roc_curve <- roc(test_tr$RESPONSE, tr_roc[,2], plot = TRUE, print.auc = TRUE, asp = NA)
+
+
+
 
 ```

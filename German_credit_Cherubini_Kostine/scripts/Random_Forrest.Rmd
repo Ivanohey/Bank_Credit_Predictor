@@ -72,3 +72,10 @@ rf_imp = varImp(german_rf)
 plot(rf_imp, top = 10)
 
 ```
+
+```{r}
+rf_roc <- predict(german_rf, test_rf, type="prob")
+
+rf_roc_curve <- roc(test_rf$RESPONSE, rf_roc[,2], plot = TRUE, print.auc = TRUE, asp = NA)
+```
+

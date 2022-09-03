@@ -4,6 +4,7 @@ library(nnet)
 library(gmodels)
 library(NeuralNetTools)
 library(neuralnet)
+library(pROC)
 
 nn_set = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
 
@@ -62,3 +63,11 @@ confusionMatrix(nnet_pred, nnet_test$RESPONSE, positive = "Good Rating")
 
 
 ```
+```{r}
+
+nnet_roc <- predict(nnetFit, nnet_test, type="prob")
+
+nnet_roc_curve <- roc(nnet_test$RESPONSE, nnet_roc[,2], plot = TRUE, print.auc = TRUE, asp=NA)
+
+```
+
