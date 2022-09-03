@@ -3,6 +3,7 @@ library(caret)
 library(nnet)
 library(gmodels)
 library(NeuralNetTools)
+library(neuralnet)
 
 nn_set = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
 
@@ -41,22 +42,23 @@ nnet_test <- nn_set[-trainIndex,]
 
 
 ```{r nnet fit and prediction}
-nnetFit <- caret::train(RESPONSE ~ ., data = nnet_train, method = "nnet",
+
+nnet_X <- nnet_train[, !(names(nnet_train) %in% "RESPONSE")]
+nnet_Y <- nnet_train$RESPONSE
+
+nnetFit <- caret::train(x = nnet_X, y = nnet_Y, method = "nnet",
     trace = FALSE, trControl = trainControl(method = "cv", sampling = "down"))
 
 nnetFit
-#TestClasses <- iris[-val_index, 5]
+
+plotnet(nnetFit$finalModel, pos_col = "darkgreen", neg_col = "darkred")
+
 
 nnet_pred = predict(nnetFit, nnet_test, type = "raw")
 
 nnet_pred = as.factor(nnet_pred)
 
-confusionMatrix(net_pred, nnet_test$RESPONSE, positive = "Good Rating")
+confusionMatrix(nnet_pred, nnet_test$RESPONSE, positive = "Good Rating")
 
 
 ```
-
-```{r nnet plot}
-plotnet(nnetFit, pos_col = "darkgreen", neg_col = "darkred")
-```
-

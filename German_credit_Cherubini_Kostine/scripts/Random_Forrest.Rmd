@@ -43,9 +43,11 @@ test_rf <- rf_set[-trainIndex_rf,]
 
 ```{r}
 
+rf_X <- train_rf[, !(names(train_rf) %in% "RESPONSE")]
+rf_Y <- train_rf$RESPONSE
+
 system.time(
-  german_rf <- caret::train(RESPONSE ~ .,
-                         data=train_rf,
+  german_rf <- caret::train(x = rf_X, y = rf_Y,
                          method="rf",
                          preProcess=NULL,
                          trControl=trainControl(method="cv", number=10,
@@ -69,19 +71,4 @@ rf_imp = varImp(german_rf)
 
 plot(rf_imp, top = 10)
 
-```
-```{r}
-german_rf_c <- randomForest(RESPONSE ~., 
-                          data=train_rf, 
-                          ntree=500, mtry=4, 
-                          importance=TRUE, 
-                          localImp=TRUE,
-                          na.action=na.roughfix,
-                          replace=FALSE, )
-
-print(german_rf_c)
-
-head(round(importance(german_rf_c), 2))
-
-varImpPlot(german_rf_c, n.var = 10)
 ```

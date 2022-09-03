@@ -20,7 +20,8 @@ library(dplyr)
 library(explore)
 library(caret)
 library(rpart)
-
+library(rattle)
+library(rpart.plot)
 tree_set = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
 
 tree_set["RESPONSE"][tree_set["RESPONSE"] == 0] = "Bad Rating"
@@ -82,6 +83,11 @@ par(mar = c(2, 1, 2, 1))
 options(digits = 6)
 printcp(credit_ct)
 plotcp(credit_ct)
+with(credit_ct, {
+    lines(cptable[, 2] + 1, cptable[, 3], type = "b", col = "red")
+    legend(2.7, 1, c("Resub. Error", "CV Error", "min(CV Error)+1SE"), lty = c(1,
+        1, 2), col = c("red", "black", "black"), bty = "n", cex = 0.8)
+})
 
 ```
 
@@ -118,3 +124,35 @@ confusionMatrix(german_tr_pred, test_tr$RESPONSE, positive = "Good Rating")
 
 ```
 
+
+
+```{r DT caret}
+set.seed(3456)
+ct_X <- train_tr[, !(names(train_tr) %in% "RESPONSE")]
+ct_Y <- train_tr$RESPONSE
+
+credit_caret = train(x = ct_X, y = ct_Y, 
+                  method="rpart", 
+                  trControl = trainControl(method = "cv", sampling = "down"))
+credit_caret
+
+
+
+summary(credit_caret$finalModel)
+
+
+rpart.plot(credit_caret$finalModel, main = "German Credit Classification Tree")
+
+
+par(mar = c(2, 1, 2, 1))
+options(digits = 6)
+printcp(credit_caret$finalModel)
+
+```
+
+```{r caret DT}
+german_caret_pred = predict(credit_caret, test_tr, type = "raw")
+
+confusionMatrix(german_caret_pred, test_tr$RESPONSE, positive = "Good Rating")
+
+```
