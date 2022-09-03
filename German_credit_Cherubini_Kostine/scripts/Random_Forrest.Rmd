@@ -48,7 +48,8 @@ system.time(
                          data=train_rf,
                          method="rf",
                          preProcess=NULL,
-                         trControl=trainControl(method="cv", sampling="down")
+                         trControl=trainControl(method="cv", number=10,
+                        verboseIter=FALSE, sampling="down")
                          )
 )
 
@@ -62,11 +63,25 @@ confusionMatrix(german_rf_pred, test_rf$RESPONSE, positive = "Good Rating")
 ```
 
 ```{r}
-#head(round(importance(german_rf), 2))
-#varImpPlot(german_rf)
 
-rf_imp = varImp(german_rf, scale = TRUE)
+rf_imp = varImp(german_rf)
+
 
 plot(rf_imp, top = 10)
 
+```
+```{r}
+german_rf_c <- randomForest(RESPONSE ~., 
+                          data=train_rf, 
+                          ntree=500, mtry=4, 
+                          importance=TRUE, 
+                          localImp=TRUE,
+                          na.action=na.roughfix,
+                          replace=FALSE, )
+
+print(german_rf_c)
+
+head(round(importance(german_rf_c), 2))
+
+varImpPlot(german_rf_c, n.var = 10)
 ```
