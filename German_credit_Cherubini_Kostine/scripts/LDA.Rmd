@@ -56,7 +56,7 @@ lda.fit
 lda.predict <- predict(lda.fit, newdata = test.df)
 ```
 
-```{r roc_curve}
+```{r roc_curve_MASS}
 
 #We built ROC curve to show the ratio of true/false positives
 # Get the posteriors as a dataframe.
@@ -74,6 +74,18 @@ abline(a=0, b= 1)
 text(x = .25, y = .65 ,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
 
 ```
+
+```{r roc_curve_caret}
+library(MLeval)
+lda_predict_caret_prob <- predict(lda_fit_caret, test.df, type="prob")
+
+roc_curve <- roc(test.df$RESPONSE, lda_predict_caret_prob[,2], plot = TRUE, print.auc = TRUE)
+plot(roc_curve, asp = NA)
+
+
+
+```
+
 
 ```{r confusion_matrix}
 #We build a confusion matrix
