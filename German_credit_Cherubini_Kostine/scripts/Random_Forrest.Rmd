@@ -67,6 +67,6 @@ confusionMatrix(german_rf_pred, test_rf$RESPONSE, positive = "Good Rating")
 
 rf_imp = varImp(german_rf, scale = TRUE)
 
-plot(rf_imp)
+plot(rf_imp, top = 10)
 
 ```
