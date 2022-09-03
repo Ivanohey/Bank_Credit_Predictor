@@ -2,6 +2,7 @@
 library(caret)
 library(nnet)
 library(gmodels)
+library(NeuralNetTools)
 
 nn_set = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
 
@@ -65,7 +66,6 @@ print(importance)
 
 
 ```{r}
-library(NeuralNetTools)
 par(mar = numeric(4), family = "serif")
 plotnet(german.net, pos_col = "darkgreen", neg_col = "darkblue")
 ```
