@@ -102,6 +102,6 @@ tr_roc <- predict(credit_caret, test_tr, type="prob")
 tr_roc_curve <- roc(test_tr$RESPONSE, tr_roc[,2], plot = TRUE, print.auc = TRUE, asp = NA)
 
 
-
+#Almost DONEEEEEEE
 
 ```
