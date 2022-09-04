@@ -42,26 +42,11 @@ test.df <- data_log[-trainIndex_glm,]
 
 ```
 
-
-
-```{r logistic_regression_glm}
-#We fit the logistic model with the training set
-glm.fit <- glm(RESPONSE ~ ., data = train.df, family=binomial())
-summary(glm.fit)
-
-#We do an AIC backward selection
-glm.fit.selection <- step(glm.fit)
-
-#Model predict
-glm.predict <- predict(glm.fit.selection, test.df, type="response")
-
-```
-
-```{r logistic_regression_carret}
+```{r logistic_regression}
 glm_fit_caret <- train(as.factor(RESPONSE) ~ ., data = train.df, family="binomial", method = "glmStepAIC", trControl = trainControl(method="cv", sampling="down"),  savePredictions = T)
 summary(glm_fit_caret)
 
-set.seed(1234)
+set.seed(123)
 glm_predict_caret <- predict(glm_fit_caret, test.df)
 glm_predict_caret
 
@@ -72,7 +57,7 @@ confusion_matrix_glm
 
 ```{r roc_curve}
 #We create a ROC curve
-set.seed(1234)
+set.seed(123)
 glm_predict_caret_prob <- predict(glm_fit_caret, test.df, type="prob")
 roc_curve = roc(test.df$RESPONSE, glm_predict_caret_prob[,2], plot = TRUE, print.auc = TRUE)
 plot(roc_curve,print.auc = TRUE, asp = NA)

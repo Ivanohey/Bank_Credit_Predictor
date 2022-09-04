@@ -36,7 +36,7 @@ test.df <- data[-trainIndex,]
 ```
 
 ```{r svm_linear_caret}
-set.seed(1234)
+set.seed(123)
 
 train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3, sampling="down", classProbs = TRUE)
 svml_fit <- train(RESPONSE ~ ., train.df, 
@@ -87,16 +87,10 @@ confusion_matrix_svmr
 ```
 ```{r roc_curve_svmr}
 
-svml_predict_prob <- predict(svml_fit, test.df, type="prob")
-roc_curve_svml <- roc(test.df$RESPONSE, svml_predict_prob[,2], plot = TRUE, print.auc = TRUE)
-plot(roc_curve_svml,print.auc = TRUE ,asp = NA)
-title(main="ROC curve using Support Vector Machines with Linear Kernel")
-
-
 svmr_predict_prob <- predict(svmr_fit, test.df, type="prob")
-roc_curve_svmr <- roc(test.df$RESPONSE, svmr_predict_prob[,2], plot = TRUE, print.auc = TRUE, add = TRUE)
-#plot(roc_curve_svmr,print.auc = TRUE ,asp = NA,col="red")
-#title(main="ROC curve using Support Vector Machines with Radial Kernel")
+
+plot(roc_curve_svmr,print.auc = TRUE ,asp = NA)
+title(main="ROC curve using Support Vector Machines with Radial Kernel")
 
 
 ```
