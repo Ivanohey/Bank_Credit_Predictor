@@ -17,10 +17,6 @@ data_log <- data.frame(data_log)
 data_log["RESPONSE"][data_log["RESPONSE"] == 0] = "Bad Rating"
 data_log["RESPONSE"][data_log["RESPONSE"] == 1] = "Good Rating"
 
-#convert all concerned variables to factors
-#cols = c(2,4:10,12:22,24:32)
-#data_log[,cols]= lapply(data_log[,cols], as.factor)
-
 #Remove col"OBS."
 data_log = data_log[,-1]
 

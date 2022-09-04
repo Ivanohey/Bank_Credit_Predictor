@@ -1,4 +1,4 @@
-```{r}
+```{r import + clean}
 library(ggplot2)
 library(DT)
 library(igraph)
@@ -42,7 +42,7 @@ str(tree_set)
 
 ```
 
-```{r}
+```{r data splitting}
 set.seed(3456)
 
 trainIndex_trees <- createDataPartition(tree_set$RESPONSE, p = .7,
@@ -54,15 +54,6 @@ test_tr <- tree_set[-trainIndex_trees,]
 
 
 ```
-
-
-```{r}
-german_tr_pred = predict(credit_ct1, test_tr, type = "class")
-
-confusionMatrix(german_tr_pred, test_tr$RESPONSE, positive = "Good Rating")
-
-```
-
 
 
 ```{r DT caret}
@@ -95,13 +86,12 @@ german_caret_pred = predict(credit_caret, test_tr, type = "raw")
 confusionMatrix(german_caret_pred, test_tr$RESPONSE, positive = "Good Rating")
 
 ```
-```{r}
+```{r ROC DT}
 
 tr_roc <- predict(credit_caret, test_tr, type="prob")
 
 tr_roc_curve <- roc(test_tr$RESPONSE, tr_roc[,2], plot = TRUE, print.auc = TRUE, asp = NA)
+title(main="ROC curve with Classification Trees")
 
-
-#Almost DONEEEEEEE
 
 ```

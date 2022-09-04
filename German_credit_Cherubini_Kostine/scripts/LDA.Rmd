@@ -30,49 +30,13 @@ set.seed(123)
 lda_fit_caret <- train(RESPONSE ~ ., data = train.df, method="lda", trControl = trainControl(method = "cv", sampling = "down"))
 lda_predict_caret <- predict(lda_fit_caret, newdata = test.df)
 
-
-
-```
-
-
-```{r lda_predictions_MASS}
-#We create the formula for the LDA model
-#lda_formula <- paste(names(train.df)[32], "~", paste(names(train.df)[-32], collapse=" + "))
-
-#Linear Discriminant Analysis (LDA)
-#lda.fit<-lda(as.formula(paste(lda_formula)), data = train.df)
-#lda.fit
-
-#We do some predictions on our test data
-#lda.predict <- predict(lda.fit, newdata = test.df)
-```
-
-```{r roc_curve_MASS}
-
-#We built ROC curve to show the ratio of true/false positives
-# Get the posteriors as a dataframe.
-#lda.predict.posteriors <- as.data.frame(lda.predict$posterior)
-
-# Evaluate the model
-#pred <- prediction(lda.predict.posteriors[,2], test.df$RESPONSE)
-#roc.perf = performance(pred, measure = "tpr", x.measure = "fpr")
-#auc.train <- performance(pred, measure = "auc")
-#auc.train <- auc.train@y.values
-
-# Plot ROC curve
-#plot(roc.perf)
-#abline(a=0, b= 1)
-#text(x = .25, y = .65 ,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
-#title(main = "ROC curve using Linear Discriminant Analysis (MASS)")
-
 ```
 
 ```{r roc_curve_caret}
 
 lda_predict_caret_prob <- predict(lda_fit_caret, test.df, type="prob")
-roc_curve <- roc(test.df$RESPONSE, lda_predict_caret_prob[,2], plot = TRUE, print.auc = TRUE)
-plot(roc_curve,print.auc = TRUE ,asp = NA)
-title(main="ROC curve using Linear Discriminant Analysis (Caret)")
+roc_curve <- roc(test.df$RESPONSE, lda_predict_caret_prob[,2], plot = TRUE, print.auc = TRUE, asp=NA)
+title(main="ROC curve using Linear Discriminant Analysis")
 
 ```
 
