@@ -30,7 +30,7 @@ nn_set[537,22]=75
 
 
 ```{r data splitting}
-set.seed(123)
+set.seed(3456)
 trainIndex <- createDataPartition(nn_set$RESPONSE, p = .7,
                                   list = FALSE)
 
@@ -41,7 +41,7 @@ nnet_test <- nn_set[-trainIndex,]
 
 
 ```{r nnet fit and prediction}
-set.seed(123)
+
 nnet_X <- nnet_train[, !(names(nnet_train) %in% "RESPONSE")]
 nnet_Y <- nnet_train$RESPONSE
 
@@ -49,6 +49,7 @@ nnetFit <- caret::train(x = nnet_X, y = nnet_Y, method = "nnet",
     trace = FALSE, trControl = trainControl(method = "cv", sampling = "down"))
 
 nnetFit
+
 
 plotnet(nnetFit$finalModel, pos_col = "darkgreen", neg_col = "darkred")
 title(main="Neural Network")
@@ -60,7 +61,7 @@ confusionMatrix(nnet_pred, nnet_test$RESPONSE, positive = "Good Rating")
 
 
 ```
-```{r}
+```{r roc_curve_nnet}
 
 nnet_roc <- predict(nnetFit, nnet_test, type="prob")
 
