@@ -23,18 +23,9 @@ test.df <- as.data.frame(data[-trainIndex,])
 
 ```
 
-```{r balancing_data}
-
-
-#We perform a sub-sampling of the training set in order to equalize the amount of good ratings and bad ratings in the RESPONSE feature. We reduce the amount of "Good rating"
-
-
-
-
-
-```
 
 ```{r lda_prediction_caret}
+#We perform a sub-sampling of the training set in order to equalize the amount of good ratings and bad ratings in the RESPONSE feature. We reduce the amount of "Good rating"
 
 lda_fit_caret <- train(RESPONSE ~ ., data = train.df, method="lda", trControl = trainControl(method = "cv", sampling = "down"))
 lda_predict_caret <- predict(lda_fit_caret, newdata = test.df)
@@ -73,17 +64,16 @@ auc.train <- auc.train@y.values
 plot(roc.perf)
 abline(a=0, b= 1)
 text(x = .25, y = .65 ,paste("AUC = ", round(auc.train[[1]],3), sep = ""))
+title(main = "ROC curve using Linear Discriminant Analysis (MASS)")
 
 ```
 
 ```{r roc_curve_caret}
 
 lda_predict_caret_prob <- predict(lda_fit_caret, test.df, type="prob")
-
 roc_curve <- roc(test.df$RESPONSE, lda_predict_caret_prob[,2], plot = TRUE, print.auc = TRUE)
 plot(roc_curve,print.auc = TRUE ,asp = NA)
-
-
+title(main="ROC curve using Linear Discriminant Analysis (Caret)")
 
 ```
 

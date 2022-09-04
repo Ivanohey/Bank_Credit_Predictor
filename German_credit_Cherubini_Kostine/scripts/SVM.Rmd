@@ -7,39 +7,27 @@ library(dplyr)
 library(knitr)
 library(kableExtra)
 library(caret)
+library(pROC)
 
 ```
 
 ```{r import_dataset}
 
-#We do some basic wrangling
-#data_log = read.csv("../data/GermanCredit.csv", sep = ";", header = TRUE)
-data_log = read.csv("../data/germancredit_final.csv", sep = ";", header = TRUE)
-#data_log <- data.frame(data_log)
-#data_log["RESPONSE"][data_log["RESPONSE"] == 0] = "Bad Rating"
-#data_log["RESPONSE"][data_log["RESPONSE"] == 1] = "Good Rating"
+#We do some basic wrangling specific to SVM model with Caret
+data = read.csv("../data/germancredit_final.csv", sep = ";", header = TRUE)
 
-#convert all concerned variables to factors
-#cols = c(2,4:10,12:22,24:32)
-data_log$RESPONSE <- as.factor(data_log$RESPONSE)
+data["RESPONSE"][data["RESPONSE"] == "Bad Rating"] = "Bad.Rating"
+data["RESPONSE"][data["RESPONSE"] == "Good Rating"] = "Good.Rating"
 
-#Remove col"OBS."
-#data_log = data_log[,-1]
+data$RESPONSE <- as.factor(data$RESPONSE)
 
-#data_log[37,8]=1
-#data_log[234,18]=1
-#data_log[537,22]=75
-
-#str(data_log)
-
-data <- data_log
 str(data)
 ```
 
 ```{r split_dataset}
 
 #We split the data into train (80%) and test (20%)
-set.seed(3456)
+set.seed(1234)
 trainIndex <- createDataPartition(data$RESPONSE, p = .8,
                                   list = FALSE)
 train.df <- data[ trainIndex,]
@@ -48,47 +36,69 @@ test.df <- data[-trainIndex,]
 ```
 
 ```{r svm_linear_caret}
-train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
-#train_control <- trainControl(method="cv", number=2, sampling="down")
+set.seed(1234)
 
-#grid <- expand.grid(C = c(0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2,5))
-svm_linear_caret <- train(x = svm_x, y = svm_y, method = "svmLinear", trControl = train_control, tuneGrid = expand.grid(C = seq(0.001, 2, length = 20)))
-#svm_linear_caret <- train(as.factor(RESPONSE) ~ ., train.df, method = "svmLinear", trControl = train_control, preProcess = c("center","scale"),tuneGrid = grid,tuneLength = 10)
-svm_linear_caret
-
+train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 3, sampling="down", classProbs = TRUE)
+svml_fit <- train(RESPONSE ~ ., train.df, 
+                              method = "svmLinear",
+                              trControl = train_control, 
+                              tuneGrid = expand.grid(C = seq(0.1, 2, length = 20)))
+svml_fit
+svml_predict <- predict(svml_fit, test.df)
 
 ```
+```{r confusion_matrix_svm_linear}
+confusion_matrix_svml <- confusionMatrix(svml_predict, as.factor(test.df$RESPONSE), positive= "Good.Rating")
+confusion_matrix_svml
+```
 
-```{r svm_linear}
-
-#We try using the linear Kernel
-svm_model_linear <- svm(RESPONSE ~ ., data = train.df, method = "C-classification",
-                        kernel = "linear", cost = 10, gamma = 0.1)
-
-predict_linear <- predict(svm_model_linear, test.df)
-
-confusionMatrix(predict_linear, test.df$RESPONSE, positive = "Good Rating")
-
+```{r roc_svm_linear}
+svml_predict_prob <- predict(svml_fit, test.df, type="prob")
+roc_curve_svml <- roc(test.df$RESPONSE, svml_predict_prob[,2], plot = TRUE, print.auc = TRUE)
+plot(roc_curve_svml,print.auc = TRUE ,asp = NA)
+title(main="ROC curve using Support Vector Machines with Linear Kernel")
 ```
 
 ```{r svm_radial}
-#We try using the radial Kernel
 
-C <- c(0.1, 1, 10, 100, 1000, 10000)
-sigma <- c(0.0001, 0.001, 0.01, 0.1, 1)
-gr.radial<-expand.grid(C = C, sigma = sigma)
-model_svm_rad<-train(RESPONSE ~ .,
-                          data = train.df,
-                          method = "svmRadial",
-                          trace=FALSE,
-                          trControl = trainControl(method = "cv", number = 10, 
-                                                   verboseIter = FALSE),
-                          tuneGrid=gr.radial)
-model_svm_rad
+set.seed(123)
+train_control_radial <- trainControl(method = "repeatedcv", number = 3, repeats = 3, sampling="down", classProbs = TRUE)
+C<-c(0.1, 1, 10)
+sigma<-seq(0.1, 10, length = 20)
 
-predict_radial <- predict(model_svm_rad, test.df)
+grid_radial <-expand.grid(C=C, sigma=sigma)
+svmr_fit <- train(RESPONSE ~., data = train.df, 
+                  method = "svmRadial", 
+                  trControl = train_control_radial, 
+                  preProcess = c("center","scale"),
+                  tuneGrid = grid_radial,
+                  tuneLength = 10)
 
-confusionMatrix(predict_radial, test.df$RESPONSE, positive = "Good Rating")
+svmr_fit
 
-#The svm Radial gave a bad result, we finally decided to not include it in the report... 
+svmr_predict <- predict(svmr_fit, test.df)
+svmr_predict
+
 ```
+```{r confusion_matrix_svmr}
+confusion_matrix_svmr <- confusionMatrix(svmr_predict, as.factor(test.df$RESPONSE), positive="Good.Rating")
+confusion_matrix_svmr
+
+```
+```{r roc_curve_svmr}
+
+svml_predict_prob <- predict(svml_fit, test.df, type="prob")
+roc_curve_svml <- roc(test.df$RESPONSE, svml_predict_prob[,2], plot = TRUE, print.auc = TRUE)
+plot(roc_curve_svml,print.auc = TRUE ,asp = NA)
+title(main="ROC curve using Support Vector Machines with Linear Kernel")
+
+
+svmr_predict_prob <- predict(svmr_fit, test.df, type="prob")
+roc_curve_svmr <- roc(test.df$RESPONSE, svmr_predict_prob[,2], plot = TRUE, print.auc = TRUE, add = TRUE)
+#plot(roc_curve_svmr,print.auc = TRUE ,asp = NA,col="red")
+#title(main="ROC curve using Support Vector Machines with Radial Kernel")
+
+
+```
+
+
