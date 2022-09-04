@@ -36,6 +36,9 @@ library(explore)
 library(rpart)
 library(PerformanceAnalytics)
 library(caret)
+library(hrbrthemes)
+library(ggridges)
+library(ggpubr)
 ```
 
 # EDA
@@ -99,7 +102,7 @@ paste("This data set contains",sum(rowSums(is.na(germancredit)))/nrow(germancred
 
 paste("Data Set is",(sum(complete.cases(germancredit))/nrow(germancredit))*100,"% complete")
 
-plot_missing(germancredit)
+#plot_missing(germancredit)
 
 
 #data type distribution
@@ -169,33 +172,165 @@ germancredit %>% explore(JOB, target = AGE) #No large difference in median age b
 germancredit %>% explore(AGE, target = EDUCATION) #No large difference in median age between good and bad credit rating
 
 #
-germancredit %>% explore(AMOUNT, target = RESPONSE)
+#
+germancredit %>% explore(EDUCATION, target = RESPONSE)
 
 germancredit %>% explore(RESPONSE, target = JOB)
 
 
-germancredit %>% explore(AGE, AMOUNT, target = RESPONSE)
 
-germancredit %>% explore(CHK_ACCT, target = RESPONSE)
+germancredit %>% explore(DURATION, target = AMOUNT)
 
-germancredit %>% explore(RESPONSE, target = HISTORY)
+germancredit %>% explore(AGE, target = DURATION)
 
-germancredit %>% explore(RESPONSE, target = CHK_ACCT)
+
+
+germancredit %>% explore(SAV_ACCT, target = AGE)
+
+germancredit %>% explore(SAV_ACCT, target = AMOUNT)
+
+germancredit %>% explore(CHK_ACCT, target = AMOUNT)
+
+germancredit %>% explore(CHK_ACCT, target = AGE)
+
 ```
-```{r Good rated client}
 
-ggplot(data=germancredit, aes(x=AGE, group=JOB, fill=JOB)) + 
-  geom_density(adjust=1.5, alpha=.4)
 
+
+
+# Bad and Good rated personas
+
+
+```{r}
+visual_set <-  germancredit
+
+visual_set$CHK_ACCT = as.numeric(visual_set$CHK_ACCT)
+visual_set$SAV_ACCT = as.numeric(visual_set$SAV_ACCT)
+
+visual_set["CHK_ACCT"][visual_set["CHK_ACCT"] == 1] = "< 0 DM"
+visual_set["CHK_ACCT"][visual_set["CHK_ACCT"] == 2] = "0 < x < 200 DM"
+visual_set["CHK_ACCT"][visual_set["CHK_ACCT"] == 3] = "≥ 200 DM"
+visual_set["CHK_ACCT"][visual_set["CHK_ACCT"] == 4] = "no checking account"
+visual_set["SAV_ACCT"][visual_set["SAV_ACCT"] == 1] = "< 100 DM"
+visual_set["SAV_ACCT"][visual_set["SAV_ACCT"] == 2] = "100 ≤ x < 500 DM"
+visual_set["SAV_ACCT"][visual_set["SAV_ACCT"] == 3] = "500 ≤ x < 1000 DM"
+visual_set["SAV_ACCT"][visual_set["SAV_ACCT"] == 4] = "> 1000 DM"
+visual_set["SAV_ACCT"][visual_set["SAV_ACCT"] == 5] = "unknown/no savings account"
+
+
+visual_set$CHK_ACCT = as.factor(visual_set$CHK_ACCT)
+visual_set$SAV_ACCT = as.factor(visual_set$SAV_ACCT)
 ```
+
 
 ```{r Bad rated client}
 
 
 
+
 ```
 
+```{r Good rated client}
 
+#checking account graph
+
+check_acct_plot <- visual_set %>%
+  ggplot( aes(x=CHK_ACCT, fill=RESPONSE)) +
+    geom_histogram(alpha=0.6, position="fill", stat = "count" ) +
+    scale_fill_manual(values=c("tomato1", "steelblue3")) +
+    theme_ipsum(axis_title_size = 14, axis_text_size = 12) +
+    labs(fill="Applicant credit rating", title = "Applicant checking account repartition") + 
+    scale_x_discrete(name="", limits=c("< 0 DM","0 < x < 200 DM", "≥ 200 DM", "no checking account")) +
+    scale_y_continuous(name="Credit rating repartition", labels = scales::percent_format(accuracy = 1))
+    
+check_acct_plot
+
+#age graph
+
+age_set = dplyr::select(visual_set, RESPONSE, AGE)
+
+
+age_plot = ggplot(data = age_set, aes(x = AGE, fill = RESPONSE)) + 
+  geom_density(data = subset(age_set, RESPONSE == "Good Rating"), binwidth = 5, color="white", position = "identity", mapping = aes(y = ..density..),alpha=0.6) +
+  geom_density(data = subset(age_set, RESPONSE == "Bad Rating"), binwidth = 5, color="white", position = "identity", 
+                 mapping = aes(y = - ..density.. ), alpha = 0.6) +
+  scale_x_continuous("Age", breaks = c(seq(0, 75, by=5))) +
+  scale_y_continuous("Rating Density", labels = NULL) +
+  scale_fill_manual(values=c("tomato1", "steelblue3")) +
+  coord_flip() +
+  theme(panel.border = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_blank(),
+  # Change axis line
+  axis.line.y = element_line(colour = "black"),
+  axis.line.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  ) + ggtitle("Rating and applicant age")
+
+age_plot
+
+
+#amount graph
+
+amount_plot = ggplot(data = visual_set, aes(x = AMOUNT, fill = RESPONSE)) +
+  geom_density(data = subset(visual_set, RESPONSE == "Good Rating"), binwidth = 5, color="white", position = "identity", mapping = aes(y = ..density..),alpha=0.6) +
+  geom_density(data = subset(visual_set, RESPONSE == "Bad Rating"), binwidth = 5, color="white", position = "identity",
+                 mapping = aes(y = - ..density.. ), alpha = 0.6) +
+  scale_x_continuous("Credit Amount", breaks = c(seq(0, 20000, by=1000))) +
+  scale_y_continuous("Rating Density", labels = NULL) +
+  scale_fill_manual(values=c("tomato1", "steelblue3")) +
+  coord_flip() +
+  theme(panel.border = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_blank(),
+  # Change axis line
+  axis.line.y = element_line(colour = "black"),
+  axis.line.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  ) + ggtitle("Rating and applicant age")
+
+amount_plot
+
+
+
+
+#duration - amount
+
+duration_amount = germancredit %>% explore(DURATION, target = AMOUNT)
+
+duration_amount
+
+#savings account - amount
+
+savings_amount = ggplot(visual_set, aes(x=SAV_ACCT, y=AMOUNT, fill=SAV_ACCT)) + 
+    geom_boxplot(alpha=0.3) +
+    theme(legend.position="none") +
+    scale_fill_brewer(palette="BuPu") +
+    scale_x_discrete(name="Savings Account", limits=c("< 100 DM","100 ≤ x < 500 DM", "500 ≤ x < 1000 DM","> 1000 DM", "unknown/no savings account")) +
+    scale_y_continuous(name="Requested Amount") +
+    labs(title = "Savings Account and Requested Amount")
+    
+
+savings_amount
+
+
+
+#history
+
+
+#employment
+
+
+#present_resident
+
+#install_rate
+
+#job
+
+
+```
 
 
 
