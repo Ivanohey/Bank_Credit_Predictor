@@ -64,7 +64,7 @@ confusionMatrix(german_rf_pred, test_rf$RESPONSE, positive = "Good Rating")
 ```{r}
 
 rf_imp = varImp(german_rf)
-plot(rf_imp, top = 10, main="Random Forest - Variable importance")
+plot(rf_imp, top = 7, main="Variable importance")
 
 
 ```

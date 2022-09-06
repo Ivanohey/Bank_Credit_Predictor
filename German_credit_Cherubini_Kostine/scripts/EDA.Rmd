@@ -131,6 +131,7 @@ unused_cols = c(2,10,22,31)
 model.matrix(~0+., data=germancredit[,-unused_cols]) %>% 
   cor(use="pairwise.complete.obs") %>% 
   ggcorrplot(show.diag = FALSE, type="upper", lab = FALSE, lab_size=2, ggtheme = ggplot2::theme_gray, colors = c("#C41E3A", "white", "#228B22" ), tl.cex = 6, insig = "blank", method = "square")
+
 ```
 
 
@@ -138,13 +139,13 @@ model.matrix(~0+., data=germancredit[,-unused_cols]) %>%
 
 ```{r}
 
-#Numerical / continuous variables analysis:
-
-plot_histogram(germancredit, title = "Histograms of GermanCredit variables", ggtheme = theme_bw())
-
-plot_density(germancredit, title ="Density plots of GermanCredit variables", ggtheme = theme_bw())
-
-plot_boxplot(germancredit, title = "Credit Rating within numerical variables", by = 'RESPONSE', ncol = 2)
+# #Numerical / continuous variables analysis:
+# 
+# plot_histogram(germancredit, title = "Histograms of GermanCredit variables", ggtheme = theme_bw())
+# 
+# plot_density(germancredit, title ="Density plots of GermanCredit variables", ggtheme = theme_bw())
+# 
+# plot_boxplot(germancredit, title = "Credit Rating within numerical variables", by = 'RESPONSE', ncol = 2)
 
 
 mydata <- germancredit[, c(2,10,22)]
@@ -153,6 +154,8 @@ chart.Correlation(mydata, histogram=TRUE, pch=19)
 
 ```
 
+
+# Visualisation
 
 ```{r}
 
@@ -173,9 +176,9 @@ germancredit %>% explore(AGE, target = EDUCATION) #No large difference in median
 
 #
 #
-germancredit %>% explore(EDUCATION, target = RESPONSE)
 
-germancredit %>% explore(RESPONSE, target = JOB)
+
+
 
 
 
@@ -198,7 +201,7 @@ germancredit %>% explore(CHK_ACCT, target = AGE)
 
 
 
-# Bad and Good rated personas
+# Visualisation
 
 
 ```{r}
@@ -223,18 +226,11 @@ visual_set$SAV_ACCT = as.factor(visual_set$SAV_ACCT)
 ```
 
 
-```{r Bad rated client}
-
-
-
-
-```
-
-```{r Good rated client}
+```{r}
 
 #checking account graph
 
-check_acct_plot <- visual_set %>%
+check_acct_response <- visual_set %>%
   ggplot( aes(x=CHK_ACCT, fill=RESPONSE)) +
     geom_histogram(alpha=0.6, position="fill", stat = "count" ) +
     scale_fill_manual(values=c("tomato1", "steelblue3")) +
@@ -243,7 +239,25 @@ check_acct_plot <- visual_set %>%
     scale_x_discrete(name="", limits=c("< 0 DM","0 < x < 200 DM", "≥ 200 DM", "no checking account")) +
     scale_y_continuous(name="Credit rating repartition", labels = scales::percent_format(accuracy = 1))
     
-check_acct_plot
+check_acct_response
+
+
+
+
+
+#savings response
+
+sav_acct_response <- visual_set %>%
+  ggplot( aes(x=SAV_ACCT, fill=RESPONSE)) +
+    geom_histogram(alpha=0.6, position="fill", stat = "count" ) +
+    scale_fill_manual(values=c("tomato1", "steelblue3")) +
+    theme_ipsum(axis_title_size = 14, axis_text_size = 12) +
+    labs(fill="Applicant credit rating", title = "Applicant savings account repartition") + 
+    scale_x_discrete(name="", limits=c("< 100 DM","100 ≤ x < 500 DM", "500 ≤ x < 1000 DM","> 1000 DM", "unknown/no savings account")) +
+    scale_y_continuous(name="Credit rating repartition", labels = scales::percent_format(accuracy = 1))
+    
+sav_acct_response
+
 
 #age graph
 
@@ -289,11 +303,32 @@ amount_plot = ggplot(data = visual_set, aes(x = AMOUNT, fill = RESPONSE)) +
   axis.line.y = element_line(colour = "black"),
   axis.line.x = element_blank(),
   axis.ticks.x = element_blank(),
-  ) + ggtitle("Rating and applicant age")
+  ) + ggtitle("Rating and Requested Amount")
 
 amount_plot
 
 
+#duration-rating
+
+duration_plot = ggplot(data = visual_set, aes(x = DURATION, fill = RESPONSE)) +
+  geom_density(data = subset(visual_set, RESPONSE == "Good Rating"), binwidth = 5, color="white", position = "identity", mapping = aes(y = ..density..),alpha=0.6) +
+  geom_density(data = subset(visual_set, RESPONSE == "Bad Rating"), binwidth = 5, color="white", position = "identity",
+                 mapping = aes(y = - ..density.. ), alpha = 0.6) +
+  scale_x_continuous("Duration", breaks = c(seq(0, 75, by=5))) +
+  scale_y_continuous("Rating Density", labels = NULL) +
+  scale_fill_manual(values=c("tomato1", "steelblue3")) +
+  coord_flip() +
+  theme(panel.border = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_blank(),
+  # Change axis line
+  axis.line.y = element_line(colour = "black"),
+  axis.line.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  ) + ggtitle("Rating and Credit Duration")
+
+duration_plot
 
 
 #duration - amount
@@ -301,6 +336,7 @@ amount_plot
 duration_amount = germancredit %>% explore(DURATION, target = AMOUNT)
 
 duration_amount
+
 
 #savings account - amount
 
@@ -315,20 +351,44 @@ savings_amount = ggplot(visual_set, aes(x=SAV_ACCT, y=AMOUNT, fill=SAV_ACCT)) +
 
 savings_amount
 
+#savings - age
 
+savings_age = ggplot(visual_set, aes(x=SAV_ACCT, y=AGE, fill=SAV_ACCT)) + 
+    geom_boxplot(alpha=0.3) +
+    theme(legend.position="none") +
+    scale_fill_brewer(palette="BuPu") +
+    scale_x_discrete(name="Savings Account", limits=c("< 100 DM","100 ≤ x < 500 DM", "500 ≤ x < 1000 DM","> 1000 DM", "unknown/no savings account")) +
+    scale_y_continuous(name="Age") +
+    labs(title = "Savings Account and Age")
+    
 
-#history
+savings_age
 
+#check - age
 
-#employment
+check_age = ggplot(visual_set, aes(x=CHK_ACCT, y=AGE, fill=CHK_ACCT)) + 
+    geom_boxplot(alpha=0.3) +
+    theme(legend.position="none") +
+    scale_fill_brewer(palette="BuPu") +
+    scale_x_discrete(name="Checking Account", limits=c("< 0 DM","0 < x < 200 DM", "≥ 200 DM", "no checking account")) +
+    scale_y_continuous(name="Age") +
+    labs(title = "Checking Account and Age")
+    
 
+check_age
 
-#present_resident
+#check - amount
 
-#install_rate
+check_amount = ggplot(visual_set, aes(x=CHK_ACCT, y=AMOUNT, fill=CHK_ACCT)) + 
+    geom_boxplot(alpha=0.3) +
+    theme(legend.position="none") +
+    scale_fill_brewer(palette="BuPu") +
+    scale_x_discrete(name="Checking Account", limits=c("< 0 DM","0 < x < 200 DM", "≥ 200 DM", "no checking account")) +
+    scale_y_continuous(name="Requested Amount") +
+    labs(title = "Checking Account and Requested")
+    
 
-#job
-
+check_amount
 
 ```
 
