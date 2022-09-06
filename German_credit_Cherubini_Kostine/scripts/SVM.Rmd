@@ -55,7 +55,7 @@ confusion_matrix_svml
 ```{r roc_svm_linear}
 svml_predict_prob <- predict(svml_fit, test.df, type="prob")
 roc_curve_svml <- roc(test.df$RESPONSE, svml_predict_prob[,2], plot = TRUE, print.auc = TRUE)
-plot(roc_curve_svml,print.auc = TRUE ,asp = NA)
+plot(roc_curve_svml,print.auc = TRUE ,asp = NA, col="red")
 title(main="ROC curve using Support Vector Machines with Linear Kernel")
 ```
 
@@ -86,13 +86,14 @@ confusion_matrix_svmr
 
 ```
 ```{r roc_curve_svmr}
-
 svmr_predict_prob <- predict(svmr_fit, test.df, type="prob")
-
+roc_curve_svmr <- roc(test.df$RESPONSE, svmr_predict_prob[,2], plot = TRUE, print.auc = TRUE)
 plot(roc_curve_svmr,print.auc = TRUE ,asp = NA)
 title(main="ROC curve using Support Vector Machines with Radial Kernel")
+```
+
+```{r double_plot_roc}
+roc_curve_svml <- roc(test.df$RESPONSE, svml_predict_prob[,2], plot = TRUE, print.auc = TRUE, asp=NA, add=TRUE)
 
 
 ```
-
-
