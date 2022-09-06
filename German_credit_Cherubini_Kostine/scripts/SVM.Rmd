@@ -93,7 +93,6 @@ title(main="ROC curve using Support Vector Machines with Radial Kernel")
 ```
 
 ```{r double_plot_roc}
-roc_curve_svml <- roc(test.df$RESPONSE, svml_predict_prob[,2], plot = TRUE, print.auc = TRUE, asp=NA, add=TRUE)
-
+ggroc(list("SVM Linear" = roc_curve_svml, "SVM Radial" = roc_curve_svmr))
 
 ```
